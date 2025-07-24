@@ -10,6 +10,10 @@ on:
         required: false
         type: string
         default: ${{ github.repository }}
+    secrets:
+        github_token:
+          description: 'GitHub token with repo and PR permissions'
+          required: true
 
 permissions:
   contents: write
@@ -25,7 +29,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ inputs.repository }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.github_token }}
 
       - name: Extract changelog link
         id: changelog
@@ -40,7 +44,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.github_token }}
         with:
           tag_name: ${{ inputs.version }}
           name: ${{ inputs.version }}
@@ -48,9 +52,3 @@ jobs:
           prerelease: false
           body: |
             See the changes in [CHANGELOG.md](${{ steps.changelog.outputs.link }}).
-
-  # build-and-package:
-  #   needs: create-release
-  #   uses: ./.github/workflows/build-and-package.yml
-  #   with:
-  #     version: ${{ inputs.version }}
