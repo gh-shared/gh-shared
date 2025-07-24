@@ -1,0 +1,45 @@
+name: Create Release
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Extract changelog link
+        id: changelog
+        run: |
+          LINK="https://github.com/${{ github.repository }}/blob/${{ inputs.version }}/CHANGELOG.md#${{ inputs.version }}"
+          echo "link=$LINK" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ inputs.version }}
+          name: ${{ inputs.version }}
+          draft: false
+          prerelease: false
+          body: |
+            See the changes in [CHANGELOG.md](${{ steps.changelog.outputs.link }}).
+
+  # build-and-package:
+  #   needs: create-release
+  #   uses: ./.github/workflows/build-and-package.yml
+  #   with:
+  #     version: ${{ inputs.version }}
