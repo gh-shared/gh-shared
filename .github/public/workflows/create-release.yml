@@ -20,8 +20,25 @@ jobs:
     secrets:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # build-and-package:
-  #   needs: create-release
-  #   uses: ./.github/workflows/build-and-package.yml
-  #   with:
-  #     version: ${{ inputs.version || github.ref_name }}
+  check-build-and-package:
+    needs: create-release
+    runs-on: ubuntu-latest
+    outputs:
+      exists: ${{ steps.check_file.outputs.exists }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check if build-and-package.yml exists
+        id: check_file
+        run: |
+          if [ -f ".github/workflows/build-and-package.yml" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-package:
+    needs: check-build-and-package
+    if: ${{ needs.check-build-and-package.outputs.exists == 'true' }}
+    uses: ./.github/workflows/build-and-package.yml
+    with:
+      version: ${{ inputs.version || github.ref_name }}
