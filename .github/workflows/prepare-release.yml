@@ -1,12 +1,29 @@
 name: Prepare Release Branch
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       version:
         description: 'Version tag (e.g. v1.2.3)'
         required: true
         type: string
+      package_files:
+        description: 'JSON array of package.json files to update (e.g. ["package.json", "app/package.json"])'
+        required: true
+        type: string
+      base_branch:
+        description: 'Base branch for PR (default: master)'
+        required: false
+        type: string
+        default: 'master'
+      repository:
+        description: 'Target repository (default: calling repo)'
+        required: false
+        type: string
+    secrets:
+      github_token:
+        description: 'GitHub token with repo and PR permissions'
+        required: true
 
 permissions:
   contents: write
@@ -16,8 +33,11 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout target repository
         uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository || github.repository }}
+          token: ${{ secrets.github_token }}
 
       - name: Set up Git config
         run: |
@@ -26,36 +46,67 @@ jobs:
 
       - name: Extract version without "v"
         id: version
-        run: echo "STRIPPED_VERSION=${{ github.event.inputs.version }}" | sed 's/^v//' >> $GITHUB_ENV
+        run: |
+          VERSION="${{ inputs.version }}"
+          STRIPPED_VERSION="${VERSION#v}"
+          echo "STRIPPED_VERSION=$STRIPPED_VERSION" >> $GITHUB_ENV
+          echo "stripped_version=$STRIPPED_VERSION" >> $GITHUB_OUTPUT
 
       - name: Update version in package files
         run: |
-          VERSION=$STRIPPED_VERSION
-          jq ".version = \"$VERSION\"" package.json > tmp && mv tmp package.json
-          jq ".version = \"$VERSION\"" app/package.json > tmp && mv tmp app/package.json
-          jq ".version = \"$VERSION\"" app/client/package.json > tmp && mv tmp app/client/package.json
-          jq ".version = \"$VERSION\"" app/package-lock.json > tmp && mv tmp app/package-lock.json
-
-          git add package.json app/package.json app/client/package.json app/package-lock.json
-          git commit -m "chore: bump version to $VERSION"
+          VERSION="$STRIPPED_VERSION"
+          PACKAGE_FILES='${{ inputs.package_files }}'
+          
+          # Parse JSON array and update each file
+          echo "$PACKAGE_FILES" | jq -r '.[]' | while read -r file; do
+            if [ -f "$file" ]; then
+              echo "Updating version in $file to $VERSION"
+              jq --arg version "$VERSION" '.version = $version' "$file" > tmp && mv tmp "$file"
+              git add "$file"
+            else
+              echo "Warning: File $file not found, skipping..."
+            fi
+          done
+          
+          # Commit changes if there are any
+          if git diff --staged --quiet; then
+            echo "No package files were updated"
+          else
+            git commit -m "chore: bump version to $VERSION"
+          fi
 
       - name: Update CHANGELOG.md
         run: |
-          VERSION=${{ github.event.inputs.version }}
-          LINK_START=$(grep -m1 "^# v" CHANGELOG.md | awk '{ print $2 }')
-          CHANGELOG_HEADER="# $VERSION\n\nChanges are not detailed here. For more information, see: https://github.com/${{ github.repository }}/compare/$LINK_START...$VERSION\n\n"
-          awk -v header="$CHANGELOG_HEADER" 'BEGIN {print header} {print}' CHANGELOG.md > tmp && mv tmp CHANGELOG.md
-          git add CHANGELOG.md
-          git commit -m "chore: update CHANGELOG for $VERSION"
+          VERSION="${{ inputs.version }}"
+          TARGET_REPO="${{ inputs.repository || github.repository }}"
+          
+          if [ -f "CHANGELOG.md" ]; then
+            LINK_START=$(grep -m1 "^# v" CHANGELOG.md | awk '{ print $2 }' || echo "")
+            if [ -n "$LINK_START" ]; then
+              CHANGELOG_HEADER="# $VERSION\n\nChanges are not detailed here. For more information, see: https://github.com/$TARGET_REPO/compare/$LINK_START...$VERSION\n\n"
+            else
+              CHANGELOG_HEADER="# $VERSION\n\nInitial release.\n\n"
+            fi
+            awk -v header="$CHANGELOG_HEADER" 'BEGIN {printf "%s", header} {print}' CHANGELOG.md > tmp && mv tmp CHANGELOG.md
+            git add CHANGELOG.md
+            git commit -m "chore: update CHANGELOG for $VERSION"
+          else
+            echo "CHANGELOG.md not found, skipping..."
+          fi
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
-          commit-message: "chore: prepare ${{ github.event.inputs.version }}"
-          branch: prepare-${{ github.event.inputs.version }}
-          base: master
-          title: "chore: prepare ${{ github.event.inputs.version }}"
+          token: ${{ secrets.github_token }}
+          commit-message: "chore: prepare ${{ inputs.version }}"
+          branch: prepare-${{ inputs.version }}
+          base: ${{ inputs.base_branch }}
+          title: "chore: prepare ${{ inputs.version }}"
           body: |
-            Update required files for the ${{ github.event.inputs.version }} release.
+            Update required files for the ${{ inputs.version }} release.
 
-            Please review and edit the content of `CHANGELOG.md` if needed.
+            **Changes included:**
+            - Version bumped in package files
+            - CHANGELOG.md updated with new version entry
+
+            Please review and edit the content of `CHANGELOG.md` if needed before merging.

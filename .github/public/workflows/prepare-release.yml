@@ -1,0 +1,25 @@
+name: Prepare Release Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v1.2.3)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    uses: org1/workflows/.github/workflows/prepare-release.yml@main
+    with:
+      version: ${{ inputs.version }}
+      # Konfiguráld a saját projekt package.json fájljaidat:
+      package_files: '["package.json", "app/package.json", "app/client/package.json", "app/package-lock.json"]'
+      base_branch: 'master'  # vagy 'main' ha az a default branch-ed
+      repository: ${{ github.repository }}
+    secrets:
+      github_token: ${{ secrets.CROSS_ORG_TOKEN }}
