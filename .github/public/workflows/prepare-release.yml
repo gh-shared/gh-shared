@@ -14,12 +14,12 @@ permissions:
 
 jobs:
   prepare:
-    uses: org1/workflows/.github/workflows/prepare-release.yml@main
+    uses: gh-shared/gh-shared/.github/workflows/prepare-release.yml@master
     with:
       version: ${{ inputs.version }}
-      # Konfiguráld a saját projekt package.json fájljaidat:
+      # Configure yourself
       package_files: '["package.json", "app/package.json", "app/client/package.json", "app/package-lock.json"]'
-      base_branch: 'master'  # vagy 'main' ha az a default branch-ed
+      base_branch: 'master'  # or "main"
       repository: ${{ github.repository }}
     secrets:
-      github_token: ${{ secrets.CROSS_ORG_TOKEN }}
+      github_token: ${{ secrets.GITHUB_TOKEN }}
