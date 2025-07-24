@@ -1,0 +1,24 @@
+name: Create Release for Project
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+  # push:
+  #   tags:
+  #     - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    uses: gh-shared/gh-shared/.github/workflows/create-release.yml@master
+    with:
+      version: ${{ inputs.version || github.ref_name }}
+      repository: ${{ github.repository }}
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

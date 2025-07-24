@@ -6,6 +6,10 @@ on:
       version:
         required: true
         type: string
+      repository:
+        required: false
+        type: string
+        default: ${{ github.repository }}
 
 permissions:
   contents: write
@@ -17,13 +21,20 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout code
+      - name: Checkout calling repository
         uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract changelog link
         id: changelog
         run: |
-          LINK="https://github.com/${{ github.repository }}/blob/${{ inputs.version }}/CHANGELOG.md#${{ inputs.version }}"
+          REPO="${{ inputs.repository }}"
+          if [ -z "$REPO" ]; then
+            REPO="${{ github.repository }}"
+          fi
+          LINK="https://github.com/$REPO/blob/${{ inputs.version }}/CHANGELOG.md#${{ inputs.version }}"
           echo "link=$LINK" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
