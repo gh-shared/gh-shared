@@ -18,7 +18,7 @@ jobs:
     with:
       version: ${{ inputs.version }}
       # Configure yourself
-      package_files: '["package.json", "app/package.json", "app/client/package.json", "app/package-lock.json"]'
+      package_files: '["package.json", "composer.json"]'
       base_branch: 'master'  # or "main"
       repository: ${{ github.repository }}
     secrets:
