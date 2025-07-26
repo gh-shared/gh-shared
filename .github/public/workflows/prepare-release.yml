@@ -22,4 +22,4 @@ jobs:
       base_branch: 'master'  # or "main"
       repository: ${{ github.repository }}
     secrets:
-      github_token: ${{ secrets.GITHUB_TOKEN }}
+      repo_token: ${{ secrets.GITHUB_TOKEN }}

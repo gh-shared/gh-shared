@@ -26,7 +26,7 @@ on:
         description: 'Extracted version from commit message'
         value: ${{ jobs.tag-on-merge.outputs.version }}
     secrets:
-      github_token:
+      repo_token:
         description: 'GitHub token with repo permissions'
         required: true
 
@@ -45,7 +45,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ${{ inputs.repository || github.repository }}
-          token: ${{ secrets.github_token }}
+          token: ${{ secrets.repo_token }}
           fetch-depth: 0
 
       - name: Extract version from commit message

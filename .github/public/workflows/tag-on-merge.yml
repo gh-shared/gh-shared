@@ -19,7 +19,7 @@ jobs:
       commit_message: ${{ github.event.head_commit.message }}
       create_release_workflow_path: './.github/workflows/create-release.yml'
     secrets:
-      github_token: ${{ secrets.GITHUB_TOKEN }}
+      repo_token: ${{ secrets.GITHUB_TOKEN }}
 
   create-release:
     needs: tag-on-merge
