@@ -10,7 +10,7 @@ on:
         default: 'master'
       repository:
         description: 'Target repository (default: calling repo)'
-        required: false
+        required: true
         type: string
       commit_message:
         description: 'The commit message to check'
@@ -39,7 +39,7 @@ jobs:
       - name: Checkout target repository
         uses: actions/checkout@v4
         with:
-          repository: ${{ inputs.repository || github.repository }}
+          repository: ${{ inputs.repository }}
           token: ${{ secrets.repo_token }}
           fetch-depth: 0
 
