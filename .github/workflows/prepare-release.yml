@@ -36,6 +36,11 @@ on:
         required: false
         type: string
         default: 'github-actions[bot]@users.noreply.github.com'
+      delete_existing_branch:
+        description: 'Delete existing prepare branch if it exists (default: true)'
+        required: false
+        type: boolean
+        default: true
     secrets:
       repo_token:
         description: 'GitHub token with repo and PR permissions'
@@ -59,6 +64,25 @@ jobs:
         run: |
           git config user.name "${{ inputs.git_author_name }}"
           git config user.email "${{ inputs.git_author_email }}"
+
+      - name: Delete existing prepare branch if exists
+        if: ${{ inputs.delete_existing_branch }}
+        run: |
+          BRANCH_NAME="prepare-${{ inputs.version }}"
+          
+          # Check if branch exists locally and delete it
+          if git show-ref --verify --quiet refs/heads/$BRANCH_NAME; then
+            echo "Local branch $BRANCH_NAME exists, deleting..."
+            git branch -D $BRANCH_NAME
+          fi
+          
+          # Check if branch exists on remote and delete it
+          if git ls-remote --heads origin $BRANCH_NAME | grep -q $BRANCH_NAME; then
+            echo "Remote branch $BRANCH_NAME exists, deleting..."
+            git push origin --delete $BRANCH_NAME
+          fi
+          
+          echo "Branch cleanup completed"
 
       - name: Extract version without "v"
         id: version
