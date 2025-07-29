@@ -21,6 +21,11 @@ on:
         required: false
         type: string
         default: '[]'
+      changelog_file:
+        description: 'Path to changelog file (default: CHANGELOG.md)'
+        required: false
+        type: string
+        default: 'CHANGELOG.md'
     secrets:
       repo_token:
         description: 'GitHub token with repo and PR permissions'
@@ -76,24 +81,37 @@ jobs:
             git commit -m "chore: bump version to $VERSION"
           fi
 
-      - name: Update CHANGELOG.md
+      - name: Update or create changelog
         run: |
           VERSION="${{ inputs.version }}"
           TARGET_REPO="${{ inputs.repository }}"
+          CHANGELOG_FILE="${{ inputs.changelog_file }}"
           
-          if [ -f "CHANGELOG.md" ]; then
-            LINK_START=$(grep -m1 "^# v" CHANGELOG.md | awk '{ print $2 }' || echo "")
-            if [ -n "$LINK_START" ]; then
-              CHANGELOG_HEADER="# $VERSION\n\nChanges are not detailed here. For more information, see: https://github.com/$TARGET_REPO/compare/$LINK_START...$VERSION\n\n"
-            else
-              CHANGELOG_HEADER="# $VERSION\n\nInitial release.\n\n"
-            fi
-            awk -v header="$CHANGELOG_HEADER" 'BEGIN {printf "%s", header} {print}' CHANGELOG.md > tmp && mv tmp CHANGELOG.md
-            git add CHANGELOG.md
-            git commit -m "chore: update CHANGELOG for $VERSION"
-          else
-            echo "CHANGELOG.md not found, skipping..."
+          # Create directory if it doesn't exist
+          CHANGELOG_DIR=$(dirname "$CHANGELOG_FILE")
+          if [ "$CHANGELOG_DIR" != "." ] && [ ! -d "$CHANGELOG_DIR" ]; then
+            mkdir -p "$CHANGELOG_DIR"
           fi
+          
+          if [ -f "$CHANGELOG_FILE" ]; then
+            # File exists, update it
+            LINK_START=$(grep -m1 "^# v" "$CHANGELOG_FILE" | awk '{ print $2 }' || echo "")
+            if [ -n "$LINK_START" ]; then
+              CHANGELOG_HEADER="# $VERSION\n\nChanges are not detailed here. For more information, see: https://github.com/$TARGET_REPO/compare/$LINK_START...$VERSION\n"
+            else
+              CHANGELOG_HEADER="# $VERSION\n\nInitial release.\n"
+            fi
+            awk -v header="$CHANGELOG_HEADER" 'BEGIN {printf "%s", header} {print}' "$CHANGELOG_FILE" > tmp && mv tmp "$CHANGELOG_FILE"
+            echo "Updated existing changelog: $CHANGELOG_FILE"
+          else
+            # File doesn't exist, create it
+            echo "# $VERSION" > "$CHANGELOG_FILE"
+            echo "" >> "$CHANGELOG_FILE"
+            echo "Initial release." >> "$CHANGELOG_FILE"
+          fi
+          
+          git add "$CHANGELOG_FILE"
+          git commit -m "chore: update changelog for $VERSION"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
@@ -108,6 +126,6 @@ jobs:
 
             **Changes included:**
             - Version bumped in package files
-            - CHANGELOG.md updated with new version entry
+            - ${{ inputs.changelog_file }} updated with new version entry
 
-            Please review and edit the content of `CHANGELOG.md` if needed before merging.
+            Please review and edit the content of `${{ inputs.changelog_file }}` if needed before merging.
