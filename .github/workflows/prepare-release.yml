@@ -26,6 +26,16 @@ on:
         required: false
         type: string
         default: 'CHANGELOG.md'
+      git_author_name:
+        description: 'Git author name for commits (default: github-actions[bot])'
+        required: false
+        type: string
+        default: 'github-actions[bot]'
+      git_author_email:
+        description: 'Git author email for commits (default: github-actions[bot]@users.noreply.github.com)'
+        required: false
+        type: string
+        default: 'github-actions[bot]@users.noreply.github.com'
     secrets:
       repo_token:
         description: 'GitHub token with repo and PR permissions'
@@ -47,8 +57,8 @@ jobs:
 
       - name: Set up Git config
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          git config user.name "${{ inputs.git_author_name }}"
+          git config user.email "${{ inputs.git_author_email }}"
 
       - name: Extract version without "v"
         id: version
