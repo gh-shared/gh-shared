@@ -16,11 +16,6 @@ on:
         description: 'The commit message to check'
         required: true
         type: string
-      create_release_workflow_path:
-        description: 'Path to the create-release workflow in the calling repo'
-        required: false
-        type: string
-        default: './.github/workflows/create-release.yml'
     outputs:
       version:
         description: 'Extracted version from commit message'
