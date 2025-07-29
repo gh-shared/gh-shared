@@ -131,7 +131,7 @@ jobs:
             # File exists, update it
             LINK_START=$(grep -m1 "^# v" "$CHANGELOG_FILE" | awk '{ print $2 }' || echo "")
             if [ -n "$LINK_START" ]; then
-              CHANGELOG_HEADER="# $VERSION\n\nChanges are not detailed here. For more information, see: https://github.com/$TARGET_REPO/compare/$LINK_START...$VERSION\n"
+              CHANGELOG_HEADER="# $VERSION\n\nFor more information, see: [$LINK_START...$VERSION](https://github.com/$TARGET_REPO/compare/$LINK_START...$VERSION)\n"
             else
               CHANGELOG_HEADER="# $VERSION\n\nInitial release.\n"
             fi
