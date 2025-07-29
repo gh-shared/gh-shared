@@ -108,6 +108,7 @@ jobs:
             echo "# $VERSION" > "$CHANGELOG_FILE"
             echo "" >> "$CHANGELOG_FILE"
             echo "Initial release." >> "$CHANGELOG_FILE"
+            echo "Created new changelog: $CHANGELOG_FILE"
           fi
           
           git add "$CHANGELOG_FILE"
