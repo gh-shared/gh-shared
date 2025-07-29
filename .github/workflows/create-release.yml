@@ -1,0 +1,54 @@
+name: Create Release
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      repository:
+        required: false
+        type: string
+        default: ${{ github.repository }}
+    secrets:
+        repo_token:
+          description: 'GitHub token with repo and PR permissions'
+          required: true
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout calling repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.repository }}
+          token: ${{ secrets.repo_token }}
+
+      - name: Extract changelog link
+        id: changelog
+        run: |
+          REPO="${{ inputs.repository }}"
+          if [ -z "$REPO" ]; then
+            REPO="${{ github.repository }}"
+          fi
+          LINK="https://github.com/$REPO/blob/${{ inputs.version }}/CHANGELOG.md#${{ inputs.version }}"
+          echo "link=$LINK" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.repo_token }}
+        with:
+          tag_name: ${{ inputs.version }}
+          name: ${{ inputs.version }}
+          draft: false
+          prerelease: false
+          body: |
+            See the changes in [CHANGELOG.md](${{ steps.changelog.outputs.link }}).

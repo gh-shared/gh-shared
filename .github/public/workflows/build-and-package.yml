@@ -1,0 +1,19 @@
+name: Build and Package
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+        type: string
+
+jobs:
+  no-build-needed:
+    runs-on: ubuntu-latest
+    steps:
+      - name: No Build Required
+        run: |
+          echo "📦 Build and Package workflow triggered for version: ${{ inputs.version }}"
+          echo "ℹ️ This repository doesn't require building - release is ready as-is"
+          echo "✅ Workflow completed successfully"

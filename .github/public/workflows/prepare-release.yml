@@ -1,0 +1,25 @@
+name: Prepare Release Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g. v1.2.3)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare:
+    uses: gh-shared/gh-shared/.github/workflows/prepare-release.yml@master
+    with:
+      version: ${{ inputs.version }}
+      # Configure yourself
+      package_files: '["package.json", "composer.json"]'
+      base_branch: 'master'  # or "main"
+      repository: ${{ github.repository }}
+    secrets:
+      repo_token: ${{ secrets.GITHUB_TOKEN }}

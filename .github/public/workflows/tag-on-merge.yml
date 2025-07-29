@@ -1,0 +1,27 @@
+name: Tag on Merge of Prepare PR
+
+on:
+  push:
+    branches:
+      - master  # or 'main'
+
+permissions:
+  contents: write
+
+jobs:
+  tag-on-merge:
+    if: |
+      contains(github.event.head_commit.message, 'chore: update CHANGELOG for ') || startsWith(github.event.head_commit.message, 'chore: prepare v')
+    uses: gh-shared/gh-shared/.github/workflows/tag-on-merge.yml@master
+    with:
+      target_branch: 'master'  # or 'main'
+      repository: ${{ github.repository }}
+      commit_message: ${{ github.event.head_commit.message }}
+    secrets:
+      repo_token: ${{ secrets.GITHUB_TOKEN }}
+
+  create-release:
+    needs: tag-on-merge
+    uses: ./.github/workflows/create-release.yml
+    with:
+      version: ${{ needs.tag-on-merge.outputs.version }}
