@@ -17,7 +17,6 @@ jobs:
       target_branch: 'master'  # or 'main'
       repository: ${{ github.repository }}
       commit_message: ${{ github.event.head_commit.message }}
-      create_release_workflow_path: './.github/workflows/create-release.yml'
     secrets:
       repo_token: ${{ secrets.GITHUB_TOKEN }}
 
