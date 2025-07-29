@@ -3,13 +3,14 @@ name: Create Release
 on:
   workflow_call:
     inputs:
-      version:
+      repository:
+        description: 'Target repository (default: calling repo)'
         required: true
         type: string
-      repository:
-        required: false
+      version:
+        description: 'Version tag (e.g. v1.2.3)'
+        required: true
         type: string
-        default: ${{ github.repository }}
     secrets:
         repo_token:
           description: 'GitHub token with repo and PR permissions'

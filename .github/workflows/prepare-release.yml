@@ -3,12 +3,8 @@ name: Prepare Release Branch
 on:
   workflow_call:
     inputs:
-      version:
-        description: 'Version tag (e.g. v1.2.3)'
-        required: true
-        type: string
-      package_files:
-        description: 'JSON array of package.json files to update (e.g. ["package.json", "app/package.json"])'
+      repository:
+        description: 'Target repository (default: calling repo)'
         required: true
         type: string
       base_branch:
@@ -16,10 +12,15 @@ on:
         required: false
         type: string
         default: 'master'
-      repository:
-        description: 'Target repository (default: calling repo)'
+      version:
+        description: 'Version tag (e.g. v1.2.3)'
+        required: true
+        type: string
+      package_files:
+        description: 'JSON array of package.json files to update (e.g. ["package.json", "app/package.json"])'
         required: false
         type: string
+        default: '[]'
     secrets:
       repo_token:
         description: 'GitHub token with repo and PR permissions'
@@ -36,7 +37,7 @@ jobs:
       - name: Checkout target repository
         uses: actions/checkout@v4
         with:
-          repository: ${{ inputs.repository || github.repository }}
+          repository: ${{ inputs.repository }}
           token: ${{ secrets.repo_token }}
 
       - name: Set up Git config
@@ -78,7 +79,7 @@ jobs:
       - name: Update CHANGELOG.md
         run: |
           VERSION="${{ inputs.version }}"
-          TARGET_REPO="${{ inputs.repository || github.repository }}"
+          TARGET_REPO="${{ inputs.repository }}"
           
           if [ -f "CHANGELOG.md" ]; then
             LINK_START=$(grep -m1 "^# v" CHANGELOG.md | awk '{ print $2 }' || echo "")
