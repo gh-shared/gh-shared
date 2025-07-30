@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       repository:
-        description: 'Target repository (default: calling repo)'
+        description: 'Target repository'
         required: true
         type: string
       commit_message:
@@ -37,6 +37,7 @@ jobs:
   tag-on-merge:
     if: |
       startsWith(inputs.commit_message, 'chore: prepare v') ||
+      contains(inputs.commit_message, 'chore: update CHANGELOG for v') ||
       (contains(inputs.commit_message, 'Merge pull request') && contains(inputs.commit_message, '/prepare-v'))
     runs-on: ubuntu-latest
     outputs:
@@ -63,6 +64,10 @@ jobs:
             VERSION="v${BASH_REMATCH[1]}"
             echo "version=$VERSION" >> $GITHUB_OUTPUT
             echo "Extracted version from CHANGELOG: $VERSION"
+          elif [[ "$COMMIT_MSG" =~ Merge\ pull\ request.*prepare-v([0-9]+\.[0-9]+\.[0-9]+) ]]; then
+            VERSION="v${BASH_REMATCH[1]}"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "Extracted version from merge PR: $VERSION"
           else
             echo "No valid prepare commit found in message: $COMMIT_MSG"
             exit 1
