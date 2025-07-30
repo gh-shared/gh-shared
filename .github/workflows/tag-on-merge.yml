@@ -3,11 +3,6 @@ name: Tag on Merge of Prepare PR
 on:
   workflow_call:
     inputs:
-      target_branch:
-        description: 'Target branch to monitor for merges (default: master)'
-        required: false
-        type: string
-        default: 'master'
       repository:
         description: 'Target repository (default: calling repo)'
         required: true
@@ -16,6 +11,16 @@ on:
         description: 'The commit message to check'
         required: true
         type: string
+      git_author_name:
+        description: 'Git author name for commits (default: github-actions[bot])'
+        required: false
+        type: string
+        default: 'github-actions[bot]'
+      git_author_email:
+        description: 'Git author email for commits (default: github-actions[bot]@users.noreply.github.com)'
+        required: false
+        type: string
+        default: 'github-actions[bot]@users.noreply.github.com'
     outputs:
       version:
         description: 'Extracted version from commit message'
@@ -31,7 +36,8 @@ permissions:
 jobs:
   tag-on-merge:
     if: |
-      contains(inputs.commit_message, 'chore: update CHANGELOG for ') || startsWith(inputs.commit_message, 'chore: prepare v')
+      startsWith(inputs.commit_message, 'chore: prepare v') ||
+      (contains(inputs.commit_message, 'Merge pull request') && contains(inputs.commit_message, '/prepare-v'))
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.extract-version.outputs.version }}
@@ -77,8 +83,8 @@ jobs:
       - name: Create Git Tag
         if: steps.check-tag.outputs.tag_exists == 'false'
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          git config user.name "${{ inputs.git_author_name }}"
+          git config user.email "${{ inputs.git_author_email }}"
           VERSION="${{ steps.extract-version.outputs.version }}"
           git tag "$VERSION"
           git push origin "$VERSION"
