@@ -26,7 +26,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout calling repository
+      - name: Checkout target repository
         uses: actions/checkout@v4
         with:
           repository: ${{ inputs.repository }}
